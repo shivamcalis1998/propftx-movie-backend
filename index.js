@@ -8,7 +8,7 @@ const movieRoute = require("./routes/movieRoute");
 app.use(cors());
 app.use(express.json());
 
-app.use("/movie", movieRoute);
+app.use("/movies", movieRoute);
 
 app.listen(port, async () => {
   console.log(`app is running on port ${port}`);
