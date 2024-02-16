@@ -8,13 +8,14 @@ const movieRoute = express.Router();
 
 movieRoute.post("/", async (req, res) => {
   try {
-    const { title, director, language, rating } = req.body;
+    const { title, director, language, rating, image } = req.body;
 
     const newMovie = {
       title,
       director,
       language,
       rating,
+      image,
     };
 
     const movie = new movieModel(newMovie);
@@ -68,12 +69,12 @@ movieRoute.get("/", async (req, res) => {
 
 movieRoute.put("/:id", async (req, res) => {
   try {
-    const { title, director, language, rating } = req.body;
+    const { title, director, language, rating, image } = req.body;
     const { id } = req.params;
 
     const updateMovie = await movieModel.findByIdAndUpdate(
       id,
-      { title, director, language, rating },
+      { title, director, language, rating, image },
       { new: true }
     );
 
