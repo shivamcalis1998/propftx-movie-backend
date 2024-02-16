@@ -61,7 +61,9 @@ movieRoute.get("/", async (req, res) => {
       .skip(skip)
       .limit(limit);
 
-    res.status(200).json({ movie });
+    const total_document = await movieModel.countDocuments(query);
+    const totalPages = Math.ceil(total_document / limit);
+    res.status(200).json({ movie, totalPages });
   } catch (error) {
     res.status(404).json({ error: "there is no data with this movie" });
   }
