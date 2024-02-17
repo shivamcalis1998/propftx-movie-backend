@@ -1,12 +1,33 @@
 const express = require("express");
 const movieModel = require("../model/movieModel.js");
 const dotenv = require("dotenv");
-
+const jwt = require("jsonwebtoken");
 dotenv.config();
 
 const movieRoute = express.Router();
 
-movieRoute.post("/", async (req, res) => {
+const authenticated = (req, res, next) => {
+  const token = req.headers.authentication;
+
+  if (!token) {
+    return res.status(401).json({ error: "unathenticated user" });
+  }
+
+  const decode = jwt.verify(token, process.env.SECRET_KEY);
+
+  req.user = decode.user;
+
+  next();
+};
+
+const roleCheck = (req, res, next) => {
+  if (req.user.role != "CREATOR") {
+    return res.status(401).json({ error: "unathenticated" });
+  }
+  next();
+};
+
+movieRoute.post("/", authenticated, roleCheck, async (req, res) => {
   try {
     const { title, director, language, rating, image } = req.body;
 
@@ -16,6 +37,7 @@ movieRoute.post("/", async (req, res) => {
       language,
       rating,
       image,
+      userId: req.user._id,
     };
 
     const movie = new movieModel(newMovie);
@@ -30,7 +52,7 @@ movieRoute.post("/", async (req, res) => {
   }
 });
 
-movieRoute.get("/", async (req, res) => {
+movieRoute.get("/", authenticated, async (req, res) => {
   try {
     let query = {};
     const { language, sort, page, limit, search } = req.query;
@@ -69,13 +91,13 @@ movieRoute.get("/", async (req, res) => {
   }
 });
 
-movieRoute.put("/:id", async (req, res) => {
+movieRoute.put("/:id", authenticated, roleCheck, async (req, res) => {
   try {
     const { title, director, language, rating, image } = req.body;
     const { id } = req.params;
 
-    const updateMovie = await movieModel.findByIdAndUpdate(
-      id,
+    const updateMovie = await movieModel.findOneAndUpdate(
+      { _id: id, userId: req.user._id },
       { title, director, language, rating, image },
       { new: true }
     );
@@ -92,11 +114,14 @@ movieRoute.put("/:id", async (req, res) => {
   }
 });
 
-movieRoute.delete("/:id", async (req, res) => {
+movieRoute.delete("/:id", authenticated, roleCheck, async (req, res) => {
   try {
     const { id } = req.params;
 
-    const deleteMovie = await movieModel.findByIdAndDelete(id);
+    const deleteMovie = await movieModel.findOneAndDelete({
+      _id: id,
+      userId: req.user._id,
+    });
 
     if (!deleteMovie) {
       return res.status(404).json({ error: "movie not found" });
