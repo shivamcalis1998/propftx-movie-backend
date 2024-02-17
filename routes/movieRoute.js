@@ -21,7 +21,7 @@ const authenticated = (req, res, next) => {
 };
 
 const roleCheck = (req, res, next) => {
-  if (req.user.role != "CREATOR") {
+  if (req.user.role != "ADMIN") {
     return res.status(401).json({ error: "unathenticated" });
   }
   next();
@@ -96,8 +96,8 @@ movieRoute.put("/:id", authenticated, roleCheck, async (req, res) => {
     const { title, director, language, rating, image } = req.body;
     const { id } = req.params;
 
-    const updateMovie = await movieModel.findOneAndUpdate(
-      { _id: id, userId: req.user._id },
+    const updateMovie = await movieModel.findByIdAndUpdate(
+      id,
       { title, director, language, rating, image },
       { new: true }
     );
@@ -118,10 +118,7 @@ movieRoute.delete("/:id", authenticated, roleCheck, async (req, res) => {
   try {
     const { id } = req.params;
 
-    const deleteMovie = await movieModel.findOneAndDelete({
-      _id: id,
-      userId: req.user._id,
-    });
+    const deleteMovie = await movieModel.findByIdAndDelete(id);
 
     if (!deleteMovie) {
       return res.status(404).json({ error: "movie not found" });
